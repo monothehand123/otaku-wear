@@ -1,0 +1,127 @@
+'use client'
+
+import { useState } from 'react'
+import { products, categories } from '@/data/products'
+import ProductCard from './ProductCard'
+
+export default function ProductGrid() {
+  const [activeCategory, setActiveCategory] = useState('All')
+
+  const filteredProducts = activeCategory === 'All' 
+    ? products 
+    : products.filter(p => p.category === activeCategory)
+
+  return (
+    <section id="shop" className="shop-section">
+      <div className="container">
+        <div className="section-header">
+          <span className="section-tag mono">SHOP</span>
+          <h2 className="section-title">NEW DROPS</h2>
+        </div>
+        
+        <div className="category-filter">
+          {categories.map(category => (
+            <button
+              key={category}
+              className={`filter-btn ${activeCategory === category ? 'active' : ''}`}
+              onClick={() => setActiveCategory(category)}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
+        
+        <div className="product-grid">
+          {filteredProducts.map(product => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .shop-section {
+          padding: 100px 0;
+        }
+
+        .section-header {
+          text-align: center;
+          margin-bottom: 60px;
+        }
+
+        .section-tag {
+          display: inline-block;
+          font-size: 12px;
+          color: var(--accent-cyan);
+          margin-bottom: 16px;
+          letter-spacing: 0.3em;
+        }
+
+        .section-title {
+          font-size: clamp(36px, 6vw, 64px);
+          font-weight: 700;
+          color: var(--text-light);
+        }
+
+        .category-filter {
+          display: flex;
+          justify-content: center;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 50px;
+        }
+
+        .filter-btn {
+          background: linear-gradient(145deg, #8BA0AF 0%, #6D7F8D 100%);
+          border: none;
+          border-radius: 30px;
+          padding: 12px 28px;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--text-dark);
+          cursor: pointer;
+          transition: all 0.3s;
+          box-shadow: 
+            5px 5px 15px rgba(74, 89, 102, 0.3),
+            -5px -5px 15px rgba(217, 226, 233, 0.2);
+        }
+
+        .filter-btn:hover {
+          transform: translateY(-2px);
+        }
+
+        .filter-btn.active {
+          background: linear-gradient(145deg, var(--accent-cyan), #00a8cc);
+          color: white;
+          box-shadow: 
+            0 8px 25px rgba(0, 212, 255, 0.4);
+        }
+
+        .product-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+          .shop-section {
+            padding: 60px 0;
+          }
+
+          .category-filter {
+            gap: 8px;
+          }
+
+          .filter-btn {
+            padding: 10px 20px;
+            font-size: 12px;
+          }
+
+          .product-grid {
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+          }
+        }
+      `}</style>
+    </section>
+  )
+}
