@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { getPrintifyShops, getPrintifyProducts, transformPrintifyProduct } from '@/lib/printify'
+import { transformPrintifyProduct } from '@/lib/printify'
 
 interface Product {
   id: string
@@ -18,6 +18,7 @@ export default function AdminPage() {
   const [apiKey, setApiKey] = useState('')
   const [shopId, setShopId] = useState<number | null>(null)
 
+  // Use our API proxy instead of calling Printify directly
   const handleConnect = async () => {
     if (!apiKey) {
       setMessage('Please enter your Printify API key')
@@ -28,7 +29,15 @@ export default function AdminPage() {
     setMessage('Connecting to Printify...')
     
     try {
-      const shops = await getPrintifyShops(apiKey)
+      // Call our API proxy instead of Printify directly
+      const response = await fetch(`/api/printify?endpoint=shops.json&apiKey=${encodeURIComponent(apiKey)}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to connect')
+      }
+      
+      const shops = data
       
       if (shops.length === 0) {
         setMessage('No shops found. Create a shop in Printify first!')
@@ -38,8 +47,8 @@ export default function AdminPage() {
       
       setShopId(shops[0].id)
       setMessage(`Connected to "${shops[0].title}"! Now click "Sync Products"`)
-    } catch (error) {
-      setMessage('Failed to connect. Check your API key.')
+    } catch (error: any) {
+      setMessage(`Failed to connect: ${error.message}`)
       console.error(error)
     }
     
@@ -56,7 +65,15 @@ export default function AdminPage() {
     setMessage('Syncing products...')
     
     try {
-      const printifyProducts = await getPrintifyProducts(apiKey, shopId)
+      // Call our API proxy to get products
+      const response = await fetch(`/api/printify?endpoint=shops/${shopId}/products.json&apiKey=${encodeURIComponent(apiKey)}`)
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to sync products')
+      }
+      
+      const printifyProducts = data.data || []
       const transformed = printifyProducts.map(transformPrintifyProduct)
       
       // Save to localStorage for demo (in production, save to database)
@@ -64,8 +81,8 @@ export default function AdminPage() {
       
       setProducts(transformed)
       setMessage(`✅ Synced ${transformed.length} products!`)
-    } catch (error) {
-      setMessage('Failed to sync products')
+    } catch (error: any) {
+      setMessage(`Failed to sync: ${error.message}`)
       console.error(error)
     }
     

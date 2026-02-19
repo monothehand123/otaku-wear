@@ -1,15 +1,45 @@
 'use client'
 
-import { useState } from 'react'
-import { products, categories } from '@/data/products'
+import { useState, useEffect } from 'react'
+import { categories } from '@/data/products'
 import ProductCard from './ProductCard'
+
+interface Product {
+  id: string
+  name: string
+  price: number
+  image: string
+  category: string
+  sizes?: string[]
+  description?: string
+}
 
 export default function ProductGrid() {
   const [activeCategory, setActiveCategory] = useState('All')
+  const [products, setProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Load products from localStorage (synced from Printify admin)
+    const storedProducts = localStorage.getItem('otakuwear_products')
+    if (storedProducts) {
+      try {
+        const parsed = JSON.parse(storedProducts)
+        setProducts(parsed)
+      } catch (e) {
+        console.error('Failed to parse products:', e)
+        setProducts([])
+      }
+    }
+    setLoading(false)
+  }, [])
 
   const filteredProducts = activeCategory === 'All' 
     ? products 
-    : products.filter(p => p.category === activeCategory)
+    : products.filter((p: Product) => p.category === activeCategory)
+
+  // Get unique categories from products
+  const productCategories = ['All', ...new Set(products.map((p: Product) => p.category).filter(Boolean))]
 
   return (
     <section id="shop" className="shop-section">
@@ -20,7 +50,7 @@ export default function ProductGrid() {
         </div>
         
         <div className="category-filter">
-          {categories.map(category => (
+          {productCategories.map(category => (
             <button
               key={category}
               className={`filter-btn ${activeCategory === category ? 'active' : ''}`}
@@ -32,9 +62,24 @@ export default function ProductGrid() {
         </div>
         
         <div className="product-grid">
-          {filteredProducts.map(product => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+          {loading ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 0' }}>
+              <p style={{ color: 'var(--text-light)', opacity: 0.7 }}>Loading products...</p>
+            </div>
+          ) : filteredProducts.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 0' }}>
+              <p style={{ color: 'var(--text-light)', opacity: 0.7, marginBottom: '20px' }}>
+                {products.length === 0 
+                  ? 'No products yet. Go to /admin to sync with Printify!'
+                  : 'No products in this category.'
+                }
+              </p>
+            </div>
+          ) : (
+            filteredProducts.map((product: Product) => (
+              <ProductCard key={product.id} product={product} />
+            ))
+          )}
         </div>
       </div>
 
