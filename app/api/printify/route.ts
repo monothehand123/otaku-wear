@@ -8,10 +8,12 @@ const PRINTIFY_API_BASE = 'https://api.printify.com/v1'
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams
   const endpoint = searchParams.get('endpoint') || 'shops.json'
-  const apiKey = searchParams.get('apiKey')
-
+  
+  // Support both query parameter (for admin) and environment variables (for production)
+  const apiKey = searchParams.get('apiKey') || process.env.PRINTIFY_API_KEY
+  
   if (!apiKey) {
-    return NextResponse.json({ error: 'API key is required' }, { status: 400 })
+    return NextResponse.json({ error: 'API key is required. Add PRINTIFY_API_KEY to Vercel environment variables.' }, { status: 400 })
   }
 
   try {

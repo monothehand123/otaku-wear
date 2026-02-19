@@ -10,8 +10,8 @@ interface Product {
   price: number
   image: string
   category: string
-  sizes?: string[]
-  description?: string
+  sizes: string[]
+  description: string
 }
 
 export default function ProductGrid() {
@@ -20,18 +20,25 @@ export default function ProductGrid() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Load products from localStorage (synced from Printify admin)
-    const storedProducts = localStorage.getItem('otakuwear_products')
-    if (storedProducts) {
+    // Fetch products from Printify API
+    const fetchProducts = async () => {
       try {
-        const parsed = JSON.parse(storedProducts)
-        setProducts(parsed)
-      } catch (e) {
-        console.error('Failed to parse products:', e)
+        const response = await fetch('/api/printify/products')
+        if (response.ok) {
+          const data = await response.json()
+          setProducts(data)
+        } else {
+          console.error('Failed to fetch products:', response.statusText)
+          setProducts([])
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error)
         setProducts([])
       }
+      setLoading(false)
     }
-    setLoading(false)
+
+    fetchProducts()
   }, [])
 
   const filteredProducts = activeCategory === 'All' 
@@ -39,7 +46,8 @@ export default function ProductGrid() {
     : products.filter((p: Product) => p.category === activeCategory)
 
   // Get unique categories from products
-  const productCategories = ['All', ...new Set(products.map((p: Product) => p.category).filter(Boolean))]
+  const categoriesSet = new Set(products.map((p: Product) => p.category).filter(Boolean))
+  const productCategories = ['All', ...Array.from(categoriesSet)]
 
   return (
     <section id="shop" className="shop-section">
@@ -70,7 +78,7 @@ export default function ProductGrid() {
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '60px 0' }}>
               <p style={{ color: 'var(--text-light)', opacity: 0.7, marginBottom: '20px' }}>
                 {products.length === 0 
-                  ? 'No products yet. Go to /admin to sync with Printify!'
+                  ? 'No products available. Please check your Printify connection.'
                   : 'No products in this category.'
                 }
               </p>
